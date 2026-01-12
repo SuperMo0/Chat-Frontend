@@ -13,6 +13,7 @@ export default function MeBubble({ message }) {
                     <img
                         alt="Tailwind CSS chat bubble component"
                         src={authUser.avatar}
+                        draggable={false}
                     />
                 </div>
             </div>
@@ -21,7 +22,9 @@ export default function MeBubble({ message }) {
                 <time className="text-xs opacity-50">{fixDate(message.timestamp)}</time>
             </div>
             <div className="chat-bubble bg-blue text-white max-w-1/2">{message.content}</div>
-            <div className="chat-footer opacity-50">{message.isRead ? `Seen at ${message.readAt}` : 'delivered'}</div>
+            {message.chatId != "1" &&
+                <div className="chat-footer opacity-50">{message.isRead ? `Seen at ${fixDate(message.readAt)}` : 'delivered'}</div>
+            }
         </div>
     )
 

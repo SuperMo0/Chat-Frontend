@@ -15,7 +15,7 @@ export default function ChatsList() {
 
     let shouldShowChats = useMemo(() => {
 
-        let result = chats.filter((c) => c.lastMessage)
+        let result = chats.filter((c) => (c.lastMessage || c.id == "1"))
 
         result.sort((a, b) => {
             let lastMessageA = new Date(a?.lastMessage?.timestamp);
@@ -31,15 +31,29 @@ export default function ChatsList() {
         flex flex-col gap-2 overflow-x-hidden overflow-y-auto
          no-scrollbar max-h-full h-full'>
             {shouldShowChats.map((chat) => {
+                if (chat.id == "1") {
+                    return (<div key={chat.id} onClick={() => { setSelectedChat(chat) }}
+                        className='flex gap-2 items-center overflow-hidden cursor-pointer hover:bg-base-100/20 rounded-2xl'>
+                        <div className={cn('avatar', 'avatar-online')}>
+                            <div className="w-15 rounded-full">
+                                <img draggable={false} src={"https://thumbs.dreamstime.com/b/global-people-network-connection-blue-earth-ai-generated-user-icons-connected-around-glowing-globe-represents-419468051.jpg"} />
+                            </div>
+                        </div>
+                        <div>
+                            <p>global Chat</p>
+                            <p className='text-base-content/50 whitespace-nowrap'>{chat.lastMessage?.content}</p>
+                        </div>
+                    </div>)
+                }
                 let friend = getFriend(authUser.id, chat);
                 const lastMessage = chat.lastMessage;
                 let shouldShowBlueDot = lastMessage.senderId != authUser.id && !lastMessage.isRead
                 if (!chat.lastMessage) return;
                 return (<div key={chat.id} onClick={() => { setSelectedChat(chat) }}
-                    className='flex gap-2 items-center overflow-hidden'>
+                    className='flex gap-2 items-center overflow-hidden cursor-pointer hover:bg-base-100/20 rounded-2xl'>
                     <div className={cn('avatar', onlineUsers.includes(friend.id) ? 'avatar-online' : 'avatar-offline')}>
                         <div className="w-15 rounded-full">
-                            <img src={friend.avatar} />
+                            <img draggable={false} src={friend.avatar} />
                         </div>
                     </div>
                     <div>

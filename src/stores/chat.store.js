@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import api from "../lib/axios.js";
 import { toast } from "react-toastify";
-import { getFriend } from "../utils/utils.js";
+import { fixDate, getFriend } from "../utils/utils.js";
 import { useAuthStore } from "./auth.store.js";
 import { io } from 'socket.io-client'
 import { message } from "../lib/fake.js";
@@ -67,9 +67,17 @@ export const useChatStore = create((set, get) => ({
 
     setSelectedChat: (selectedChat) => {
         set({ selectedChat: selectedChat });
-
+        if (selectedChat && selectedChat.id == "1") { // case of the global chat invent a friend for now 
+            set({
+                selectedFriend: {
+                    id: "1",
+                    name: "global chat",
+                    avatar: "https://thumbs.dreamstime.com/b/global-people-network-connection-blue-earth-ai-generated-user-icons-connected-around-glowing-globe-represents-419468051.jpg"
+                }
+            });
+            return;
+        }
         let friend = getFriend(useAuthStore.getState().authUser.id, selectedChat);
-
         set({ selectedFriend: friend });
     },
 
@@ -158,6 +166,7 @@ export const useChatStore = create((set, get) => ({
     },
 
     markChatAsRead: async (chat) => {
+        if (chat.id == "1") return;  // no seen message feature for global messages 
         let newChat = {
             ...chat,
             lastMessage: {
@@ -183,7 +192,8 @@ export const useChatStore = create((set, get) => ({
 
         if (!authUser) return;
 
-        const socket = io("ws://localhost:3000", {
+        let url = import.meta.env.MODE == 'production' ? "/" : "http://localhost:3000"
+        const socket = io(url, {
             reconnectionDelayMax: 10000,
             withCredentials: true,
         });
@@ -200,13 +210,14 @@ export const useChatStore = create((set, get) => ({
 
             const newChats = chats.filter((c) => c.id != chat.id);
 
-            if (get().selectedChat?.id == chat.id) {
+            const { selectedChat } = get();
+            if (selectedChat && selectedChat.id == chat.id) {
                 const messages = get().messages || [];          // we should have a state isGettingMessages to avoid race conditions
                 set({ messages: [...messages, chat.lastMessage] });
 
                 if (chat.lastMessage.senderId != authUser.id) {
                     chat.lastMessage.isRead = true;
-                    socket.emit("messageReadUpdate", chat.lastMessage);
+                    if (chat.id != "1") socket.emit("messageReadUpdate", chat.lastMessage);
                 }
             }
             set({ chats: [...newChats, chat] });
@@ -220,19 +231,19 @@ export const useChatStore = create((set, get) => ({
         })
 
         socket.on("chatIsRead", (chat) => {
-            if (chat.id != get().selectedChat.id) return;
+            const selectedChat = get().selectedChat;
+            if (!selectedChat || chat.id != get().selectedChat.id) return;
 
             const { messages } = get();
             const { authUser } = useAuthStore.getState();
+            const { lastMessage } = chat;
             let newMessages = messages.map((m) => {
-                return (m.senderId == authUser.id) ? { ...m, isRead: true, readAt: 'now' } : m;
+                return (m.senderId == authUser.id) ? { ...m, isRead: true, readAt: lastMessage.readAt } : m;
             })
             set({ messages: newMessages });
         })
 
         socket.on("requestsToUserUpdate", (request) => {
-            console.log(request, '*****');
-
             const { requestsToUser } = get();
             set({ requestsToUser: [...requestsToUser, request] });
         })
@@ -240,7 +251,9 @@ export const useChatStore = create((set, get) => ({
         socket.on("messageReadUpdate", (message) => {
             const { authUser } = useAuthStore.getState();
 
-            if (message.chatId != get().selectedChat.id) return;
+            const selectedChat = get().selectedChat;
+
+            if (!selectedChat || message.chatId != selectedChat.id) return;
 
             const { messages } = get()
 
@@ -253,7 +266,6 @@ export const useChatStore = create((set, get) => ({
         })
 
         set({ socket: socket });
-
         return socket;
     }
 

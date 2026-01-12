@@ -4,8 +4,10 @@ import { useAuthStore } from '../stores/auth.store';
 import Cropper from '../components/Cropper';
 import api from '../lib/axios';
 import { toast } from 'react-toastify';
+import { useChatStore } from '../stores/chat.store';
 
-export default function Profile() {
+
+export default function Profile({ toggleDark, dark }) {
     const { authUser } = useAuthStore();
 
     const [name, setName] = useState(authUser.name);
@@ -16,13 +18,20 @@ export default function Profile() {
 
     const [isSaving, setIsSaving] = useState(false);
 
-    const { check } = useAuthStore();
+    const { check, logout } = useAuthStore();
 
     const inputRef = useRef();
 
+    const { friends } = useChatStore();
+
 
     function handleImageUpload(e) {
-        console.log('here');
+        if (!e.target.files[0].type.startsWith('image')) {
+            e.target.value = null;
+            toast.error("only images please ");
+            return;
+        }
+
         let fileReader = new FileReader()
         fileReader.onload = (ev) => {
             setImage(ev.target.result);
@@ -59,13 +68,13 @@ export default function Profile() {
             form.append('name', name);
             form.append('avatar', imageBlob, 'userImage.png');
 
-            const result = await api.putForm('/user', form);
+            const result = await api.putForm('/user', form, { timeout: 0 });
 
+            toast.success(result.data?.message)
             check();
 
         } catch (error) {
             console.log(error);
-
             toast.error('there was a problem try again later');
         }
         finally {
@@ -90,17 +99,17 @@ export default function Profile() {
                     </div>
                     <div className='w-44 h-44 rounded-full grid place-content-center'>
                         <div className='w-40 h-40 overflow-hidden rounded-full bg-blue border-6 border-base-content'>
-                            <img className='' src={image || authUser.avatar} alt="" />
+                            <img draggable={false} className='' src={image || authUser.avatar} alt="" />
                         </div>
                     </div>
                     <div className='text-center'>
                         <p className='text-base-content/50'>change your picture </p>
-                        <input disabled={isSaving} ref={inputRef} onInput={handleImageUpload} type="file" className="file-input bg-transparent file-input-sm" />
+                        <input id='upload-avatar-input' accept='image/*' disabled={isSaving} ref={inputRef} onInput={handleImageUpload} type="file" className="file-input bg-transparent file-input-sm" />
                     </div>
                     <div className="stats shadow">
                         <div className="stat">
                             <div className="stat-title">Total Friends</div>
-                            <div className="stat-value">22</div>
+                            <div className="stat-value">{friends?.length || ""}</div>
                             <div className="stat-desc">visit the people tab to add more</div>
                         </div>
                     </div>
@@ -109,6 +118,13 @@ export default function Profile() {
                         <input disabled={isSaving} id='name' required value={name} onChange={handleName} type="text" className="input shadow bg-transparent focus:outline-0" placeholder="Type here" />
                     </fieldset>
                     <button disabled={isSaving} onClick={handleSave} className="btn bg-transparent shadow border-base-content/40 px-17">Save Edits</button>
+                    <p>theme                     <input type="checkbox" defaultValue={dark} onChange={toggleDark} className="toggle toggle-neutral" id='theme' />
+                    </p>
+                    <a role='button'
+                        className='text-base-content/50
+                      hover:text-red-400
+                       cursor-pointer'
+                        onClick={logout}>signout</a>
                 </div>
             </div>
         </>

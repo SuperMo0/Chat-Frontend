@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useChatStore } from './../stores/chat.store'
 import UserChatHeader from './UserChatHeader';
 import MeBubble from './MeBubble'
@@ -12,6 +12,7 @@ export default function UserChat() {
 
     const { getMessages, isLoading, selectedChat, messages, markMessageAsRead, markChatAsRead } = useChatStore();
     const { authUser } = useAuthStore();
+    const messagesContainerRef = useRef();
 
     useEffect(() => {
         getMessages();
@@ -30,15 +31,20 @@ export default function UserChat() {
 
     }, [selectedChat.id, messages])
 
+    useEffect(() => {
+        if (!messages) return;
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }, [messages])
+
+
     if (!messages) return <div className='grid place-content-center h-full'>
         <ClipLoader color='blue' loading={true} />
     </div>
 
-
     return (
         <div className='h-full flex flex-col bg-slate-400/60 glass dark:bg-base-300 py-2 px-2 overflow-hidden rounded-2xl'>
             <UserChatHeader />
-            <div className='overflow-y-scroll grow basis-0 no-scrollbar'>
+            <div ref={messagesContainerRef} className='overflow-y-scroll grow basis-0 no-scrollbar'>
                 {
                     messages.map((message) => (
                         message.senderId == authUser.id ? <MeBubble key={message.id} message={message} />
@@ -46,7 +52,7 @@ export default function UserChat() {
                     ))
                 }
             </div>
-            <div className='mt-auto'>
+            <div className='mt-auto relative'>
                 <ChatInput />
             </div>
         </div>

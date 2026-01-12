@@ -16,7 +16,7 @@ export default function SearchInput() {
                         <path d="m21 21-4.3-4.3"></path>
                     </g>
                 </svg>
-                <input className='focus:outline-0 focus:border-0 text-[1.6em] bg-slate-300 glass dark:bg-base-300' type="search" required placeholder="Search" />
+                <input id='search' className='focus:outline-0 focus:border-0 text-[1.6em] bg-slate-300 glass dark:bg-base-300' type="search" required placeholder="Search" />
             </label>
         </div>
     )

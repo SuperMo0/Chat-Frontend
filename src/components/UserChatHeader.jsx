@@ -15,10 +15,10 @@ export default function UserChatHeader() {
     let isOnline = onlineUsers.includes(selectedFriend.id);
     return (
         <div className='flex gap-2 items-center pb-2 border-b border-b-base-content/20 '>
-            <MdKeyboardArrowLeft onClick={() => { setSelectedChat(null) }} className='text-6xl text-gray' />
+            <MdKeyboardArrowLeft onClick={() => { setSelectedChat(null) }} className='cursor-pointer text-6xl text-gray' />
             <div className={cn('avatar', isOnline ? 'avatar-online' : 'avatar-offline')}>
                 <div className="w-18 rounded-full">
-                    <img src={selectedFriend.avatar} />
+                    <img src={selectedFriend.avatar} draggable={false} className='cursor-pointer' />
                 </div>
             </div>
             <div>
